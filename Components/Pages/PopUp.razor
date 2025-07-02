@@ -1,0 +1,57 @@
+@page "/PopUp"
+@rendermode InteractiveServer
+
+<h3>Popup Example</h3>
+
+<button type="button" @onclick="ShowPopup">Open Popup</button>
+
+<p>Popup State: @showPopup</p>
+
+@if (showPopup)
+{
+    <div class="modal-overlay">
+        <div class="modal-box">
+            <h4>Modal Title</h4>
+            <p>This is a popup window!</p>
+            <button @onclick="ClosePopup">Close</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool showPopup = false;
+
+    private void ShowPopup()
+    {
+        showPopup = true;
+        Console.WriteLine("Popup shown");
+    }
+
+    private void ClosePopup()
+    {
+        showPopup = false;
+    }
+}
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-box {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width: 300px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+</style>

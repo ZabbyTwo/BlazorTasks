@@ -1,4 +1,5 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
@@ -6,10 +7,151 @@
 <p>Please log in or create an account to access all features.</p>
 
 <div class="d-flex gap-3 mt-3">
-    <button class="btn btn-primary">Login</button>
-    <button class="btn btn-outline-primary">Sign Up</button>
+    <button class="btn btn-primary" @onclick="ShowLogin">Login</button>
+    <button class="btn btn-outline-primary" @onclick="ShowSignUp">Sign Up</button>
 </div>
 
-@code {
+@if (showLogin)
+{
+    <div class="modal-overlay">
+        <div class="modal-box">
+            <h4>Login</h4>
 
+            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
+            @if (loginError && string.IsNullOrWhiteSpace(username))
+            {
+                <div class="text-danger small">Username is required</div>
+            }
+
+            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
+            @if (loginError && string.IsNullOrWhiteSpace(password))
+            {
+                <div class="text-danger small">Password is required</div>
+            }
+
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-secondary" @onclick="CloseLogin">Cancel</button>
+                <button class="btn btn-primary" @onclick="Login">Login</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showSignUp)
+{
+    <div class="modal-overlay">
+        <div class="modal-box">
+            <h4>Sign Up</h4>
+
+            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
+            @if (signUpError && string.IsNullOrWhiteSpace(username))
+            {
+                <div class="text-danger small">Username is required</div>
+            }
+
+            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
+            @if (signUpError && string.IsNullOrWhiteSpace(password))
+            {
+                <div class="text-danger small">Password is required</div>
+            }
+
+            <input type="password" class="form-control mb-2" @bind="passwordCheck" placeholder="Confirm your Password" />
+            @if (signUpError && (string.IsNullOrWhiteSpace(passwordCheck) || password != passwordCheck))
+            {
+                <div class="text-danger small">
+                    @if (string.IsNullOrWhiteSpace(passwordCheck))
+                    {
+                        <span>Password confirmation is required</span>
+                    }
+                    else
+                    {
+                        <span>Passwords do not match</span>
+                    }
+                </div>
+            }
+
+            <label for="birthdayInput" class="form-label mt-2">Birthday <span class="text-muted">(optional)</span></label>
+            <input id="birthdayInput" type="date" class="form-control mb-2" @bind="birthday" />
+
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-secondary" @onclick="CloseSignUp">Cancel</button>
+                <button class="btn btn-primary" @onclick="SignUp">Sign Up</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool showLogin = false;
+    private bool showSignUp = false;
+
+    private bool loginError = false;
+    private bool signUpError = false;
+
+    private string username = "";
+    private string password = "";
+    private string passwordCheck = "";
+    private DateTime? birthday = null;
+
+    private void ShowLogin()
+    {
+        showLogin = true;
+        loginError = false;
+        ResetForm();
+    }
+
+    private void ShowSignUp()
+    {
+        showSignUp = true;
+        signUpError = false;
+        ResetForm();
+    }
+
+    private void CloseLogin()
+    {
+        showLogin = false;
+        loginError = false;
+        ResetForm();
+    }
+
+    private void CloseSignUp()
+    {
+        showSignUp = false;
+        signUpError = false;
+        ResetForm();
+    }
+
+    private void Login()
+    {
+        loginError = string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password);
+        if (loginError)
+            return;
+
+        showLogin = false;
+        Console.WriteLine($"User: {username} | logged in | {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
+        ResetForm();
+    }
+
+    private void SignUp()
+    {
+        signUpError = string.IsNullOrWhiteSpace(username) ||
+        string.IsNullOrWhiteSpace(password) ||
+        string.IsNullOrWhiteSpace(passwordCheck) ||
+        password != passwordCheck;
+
+        if (signUpError)
+            return;
+
+        showSignUp = false;
+        Console.WriteLine($"User: {username} | signed up | {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        username = "";
+        password = "";
+        passwordCheck = "";
+        birthday = null;
+    }
 }

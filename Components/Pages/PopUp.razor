@@ -1,57 +1,40 @@
 @page "/PopUp"
 @rendermode InteractiveServer
 
-<h3>Popup Example</h3>
+<PageTitle>Popup</PageTitle>
 
-<button type="button" @onclick="ShowPopup">Open Popup</button>
+<div class="container mt-5">
+    <h2 class="mb-4">Create a Custom Popup</h2>
 
-<p>Popup State: @showPopup</p>
+    <div class="mb-3">
+        <label for="titleInput" class="form-label">Modal Title</label>
+        <input id="titleInput" class="form-control" @bind="modalTitle" placeholder="Enter a title..." />
+    </div>
+
+    <div class="mb-3">
+        <label for="textInput" class="form-label">Modal Text</label>
+        <input id="textInput" class="form-control" @bind="modalText" placeholder="Enter your message..." />
+    </div>
+
+    <button class="btn btn-primary" @onclick="ShowPopup">Open Popup</button>
+</div>
 
 @if (showPopup)
 {
     <div class="modal-overlay">
         <div class="modal-box">
-            <h4>Modal Title</h4>
-            <p>This is a popup window!</p>
-            <button @onclick="ClosePopup">Close</button>
+            <h4>@modalTitle</h4>
+            <p>@modalText</p>
+            <button class="btn btn-secondary mt-3" @onclick="ClosePopup">Close</button>
         </div>
     </div>
 }
 
 @code {
+    private string modalTitle = "";
+    private string modalText = "";
     private bool showPopup = false;
 
-    private void ShowPopup()
-    {
-        showPopup = true;
-        Console.WriteLine("Popup shown");
-    }
-
-    private void ClosePopup()
-    {
-        showPopup = false;
-    }
+    private void ShowPopup() => showPopup = true;
+    private void ClosePopup() => showPopup = false;
 }
-
-<style>
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .modal-box {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        width: 300px;
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    }
-</style>

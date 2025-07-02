@@ -20,19 +20,13 @@
         @if (UserState.IsLoggedIn)
         {
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="higherlower" Match="NavLinkMatch.All">Higher Lower</NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="tictactoe">Tic Tac Toe</NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="profile">Profile</NavLink>
+                <NavLink class="nav-link" href="higherlower" Match="NavLinkMatch.All">Higher or Lower</NavLink>
             </div>
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="stats">Stats</NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link">Logged in as: @UserState.Username</NavLink>
+                <NavLink class="nav-link" href="profile">Logged in as: @UserState.Username</NavLink>
             </div>
         }
     </nav>

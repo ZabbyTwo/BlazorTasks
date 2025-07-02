@@ -1,0 +1,163 @@
+@page "/stats"
+@rendermode InteractiveServer
+@inject UserState UserState
+@inject IConfiguration Configuration
+
+<PageTitle>Stats</PageTitle>
+
+<h3>Higher or Lower Stats</h3>
+
+@if (!UserState.IsLoggedIn)
+{
+    <div class="alert alert-warning">Please log in to view your statistics.</div>
+}
+else if (loading)
+{
+    <p>Loading your stats...</p>
+}
+else if (hasData)
+{
+    <table class="table table-striped w-auto">
+        <thead>
+            <tr>
+                <th>Total Games Played</th>
+                <th>Average Guesses</th>
+                <th>Last Game Started At</th>
+                <th>Last Game Finished At</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>@totalGames</td>
+                <td>@avgGuesses?.ToString("0.00")</td>
+                <td>@(lastStartedAt.HasValue? lastStartedAt.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")</td>
+                <td>@(lastFinishedAt.HasValue? lastFinishedAt.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4 class="mt-4">Games Played</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Game</th>
+                <th>Attempts</th>
+                <th>Started At</th>
+                <th>Finished At</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var game in completedGames)
+            {
+                <tr>
+                    <td>@game.Id</td>
+                    <td>@game.GameName</td>
+                    <td>@game.GuessCount</td>
+                    <td>@game.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@game.FinishedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No completed games found. Play and finish some games to see stats!</p>
+}
+
+@code {
+    private int totalGames = 0;
+    private double? avgGuesses = null;
+    private DateTime? lastStartedAt = null;
+    private DateTime? lastFinishedAt = null;
+    private bool loading = true;
+    private bool hasData = false;
+
+    private List<CompletedGame> completedGames = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserState.IsLoggedIn)
+            return;
+
+        try
+        {
+            var connStr = Configuration.GetConnectionString("MariaDb");
+            using var conn = new MySqlConnector.MySqlConnection(connStr);
+            await conn.OpenAsync();
+
+            int userId = await GetUserId(conn);
+
+            // Summary stats
+            var cmdStats = new MySqlConnector.MySqlCommand(@"
+SELECT
+COUNT(*) AS total_games,
+AVG(guess_count) AS avg_guesses,
+MAX(started_at) AS last_started,
+MAX(finished_at) AS last_finished
+FROM higherlower_sessions
+WHERE user_id = @user_id AND finished_at IS NOT NULL;", conn);
+            cmdStats.Parameters.AddWithValue("@user_id", userId);
+
+            using var reader = await cmdStats.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                totalGames = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                avgGuesses = reader.IsDBNull(1) ? null : reader.GetDouble(1);
+                lastStartedAt = reader.IsDBNull(2) ? null : reader.GetDateTime(2);
+                lastFinishedAt = reader.IsDBNull(3) ? null : reader.GetDateTime(3);
+
+                hasData = totalGames > 0;
+            }
+            await reader.CloseAsync();
+
+            // All finished games
+            var cmdList = new MySqlConnector.MySqlCommand(@"
+SELECT s.id, g.name, s.guess_count, s.started_at, s.finished_at
+FROM higherlower_sessions s
+JOIN games g ON s.game_id = g.id
+WHERE s.user_id = @user_id AND s.finished_at IS NOT NULL
+ORDER BY s.finished_at DESC;", conn);
+
+            cmdList.Parameters.AddWithValue("@user_id", userId);
+
+            using var gameReader = await cmdList.ExecuteReaderAsync();
+            while (await gameReader.ReadAsync())
+            {
+                completedGames.Add(new CompletedGame
+                {
+                    Id = gameReader.GetInt32(0),
+                    GameName = gameReader.GetString(1),
+                    GuessCount = gameReader.GetInt32(2),
+                    StartedAt = gameReader.GetDateTime(3),
+                    FinishedAt = gameReader.GetDateTime(4)
+                });
+            }
+
+            loading = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Stats load error: " + ex.Message);
+            loading = false;
+        }
+    }
+
+    private async Task<int> GetUserId(MySqlConnector.MySqlConnection conn)
+    {
+        var cmd = new MySqlConnector.MySqlCommand("SELECT id FROM users WHERE name = @name", conn);
+        cmd.Parameters.AddWithValue("@name", UserState.Username);
+        var result = await cmd.ExecuteScalarAsync();
+        return Convert.ToInt32(result);
+    }
+
+    private class CompletedGame
+    {
+        public int Id { get; set; }
+        public string GameName { get; set; } = "";
+        public int GuessCount { get; set; }
+        public DateTime StartedAt { get; set; }
+        public DateTime FinishedAt { get; set; }
+    }
+}

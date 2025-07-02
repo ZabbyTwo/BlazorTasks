@@ -1,0 +1,203 @@
+@page "/profile"
+@rendermode InteractiveServer
+@inject UserState UserState
+@inject IConfiguration Configuration
+
+@using Microsoft.AspNetCore.Components.Forms
+@using MySqlConnector
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Profile</PageTitle>
+
+<h3>Your Profile</h3>
+
+@if (!UserState.IsLoggedIn)
+{
+    <div class="alert alert-warning">Please log in to view your profile.</div>
+}
+else if (loading)
+{
+    <p>Loading profile...</p>
+}
+else if (loadError)
+{
+    <div class="alert alert-danger">Failed to load profile.</div>
+}
+else
+{
+    <EditForm Model="profile" OnValidSubmit="UpdateProfile">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <table class="table table-bordered w-auto">
+            <tr>
+                <th>Username</th>
+                <td>
+                    <InputText class="form-control" @bind-Value="profile.Username" />
+                    @if (usernameExistsError)
+                    {
+                        <div class="text-danger mt-1">Username already exists. Please choose another.</div>
+                    }
+                </td>
+            </tr>
+            <tr>
+                <th>New Password</th>
+                <td>
+                    <InputText class="form-control" type="password" @bind-Value="profile.NewPassword" />
+                </td>
+            </tr>
+            <tr>
+                <th>Birthday</th>
+                <td>
+                    <InputDate class="form-control" @bind-Value="profile.Birthday" />
+                </td>
+            </tr>
+            <tr>
+                <th>Registered At</th>
+                <td>@registeredAt?.ToString("yyyy-MM-dd HH:mm")</td>
+            </tr>
+            <tr>
+                <th>Last Login</th>
+                <td>@lastLogin?.ToString("yyyy-MM-dd HH:mm")</td>
+            </tr>
+        </table>
+
+        <button class="btn btn-primary">Save Changes</button>
+
+        @if (updateSuccess)
+        {
+            <div class="alert alert-success mt-3">Profile updated successfully!</div>
+        }
+        @if (updateError)
+        {
+            <div class="alert alert-danger mt-3">Failed to update profile.</div>
+        }
+    </EditForm>
+}
+
+@code {
+    private ProfileModel profile = new();
+    private DateTime? registeredAt = null;
+    private DateTime? lastLogin = null;
+    private bool loading = true;
+    private bool loadError = false;
+    private bool updateSuccess = false;
+    private bool updateError = false;
+    private bool usernameExistsError = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserState.IsLoggedIn)
+        {
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            var connStr = Configuration.GetConnectionString("MariaDb");
+            using var conn = new MySqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var cmd = new MySqlCommand(@"
+SELECT name, birthday, registered_at, last_login
+FROM users
+WHERE name = @name;", conn);
+            cmd.Parameters.AddWithValue("@name", UserState.Username);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                profile.Username = reader.GetString(0);
+                profile.Birthday = reader.IsDBNull(1) ? null : reader.GetDateTime(1);
+                registeredAt = reader.GetDateTime(2);
+                lastLogin = reader.IsDBNull(3) ? null : reader.GetDateTime(3);
+            }
+
+            loading = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error loading profile: " + ex.Message);
+            loadError = true;
+            loading = false;
+        }
+    }
+
+    private async Task UpdateProfile()
+    {
+        updateSuccess = false;
+        updateError = false;
+        usernameExistsError = false;
+
+        try
+        {
+            var connStr = Configuration.GetConnectionString("MariaDb");
+            using var conn = new MySqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // Check if username is taken by another user
+            if (profile.Username != UserState.Username)
+            {
+                var checkCmd = new MySqlCommand(
+                "SELECT COUNT(*) FROM users WHERE name = @newName AND name <> @currentName;", conn);
+                checkCmd.Parameters.AddWithValue("@newName", profile.Username);
+                checkCmd.Parameters.AddWithValue("@currentName", UserState.Username);
+                var count = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
+                if (count > 0)
+                {
+                    usernameExistsError = true;
+                    return;
+                }
+            }
+
+            var updateQuery = @"
+UPDATE users
+SET name = @newName,
+birthday = @birthday
+" + (string.IsNullOrWhiteSpace(profile.NewPassword) ? "" : ", password = SHA2(@password, 256)") + @"
+WHERE name = @currentName;";
+
+            var cmd = new MySqlCommand(updateQuery, conn);
+            cmd.Parameters.AddWithValue("@newName", profile.Username);
+            cmd.Parameters.AddWithValue("@birthday", profile.Birthday.HasValue ? profile.Birthday.Value.ToString("yyyy-MM-dd") :
+            (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@currentName", UserState.Username);
+
+            if (!string.IsNullOrWhiteSpace(profile.NewPassword))
+            {
+                cmd.Parameters.AddWithValue("@password", profile.NewPassword);
+            }
+
+            int affected = await cmd.ExecuteNonQueryAsync();
+
+            if (affected > 0)
+            {
+                if (UserState.Username != profile.Username)
+                {
+                    UserState.SetUser(profile.Username);
+                }
+                updateSuccess = true;
+            }
+            else
+            {
+                updateError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Profile update failed: " + ex.Message);
+            updateError = true;
+        }
+    }
+
+    public class ProfileModel
+    {
+        [Required(ErrorMessage = "Username is required")]
+        public string Username { get; set; } = "";
+
+        public string? NewPassword { get; set; }
+
+        public DateTime? Birthday { get; set; }
+    }
+}

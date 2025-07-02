@@ -1,0 +1,170 @@
+@page "/higherlower"
+@rendermode InteractiveServer
+@inject UserState UserState
+@inject IConfiguration Configuration
+
+@using Microsoft.AspNetCore.Components.Web
+
+<PageTitle>Higher Lower</PageTitle>
+
+<h3>Higher or Lower</h3>
+
+@if (!UserState.IsLoggedIn)
+{
+    <div class="alert alert-warning">Please log in to play the game.</div>
+}
+else
+{
+    <div class="mb-3">
+        <p>I'm thinking of a number between <strong>1 and 100</strong>.</p>
+
+        @if (!gameEnded)
+        {
+            <input type="number" class="form-control w-25 d-inline" @bind="guessInput" @bind:event="oninput"
+                @onkeydown="HandleKeyPress" min="1" max="100" />
+
+            <button class="btn btn-primary ms-2" @onclick="SubmitGuess">Guess</button>
+        }
+        else
+        {
+            <button class="btn btn-success" @onclick="StartNewGame">Play Again</button>
+        }
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(feedback))
+    {
+        <div class="alert alert-info">@feedback</div>
+    }
+
+    <div class="mt-3">
+        <p>Attempts: <strong>@guessCount</strong></p>
+    </div>
+}
+
+@code {
+    private int targetNumber;
+    private int guessInput = 0;
+    private int guessCount = 0;
+    private bool gameEnded = false;
+    private string feedback = "";
+    private int currentSessionId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserState.IsLoggedIn)
+        {
+            await StartNewGame();
+        }
+    }
+
+    private async Task StartNewGame()
+    {
+        var random = new Random();
+        targetNumber = random.Next(1, 101); // 1 to 100
+        guessCount = 0;
+        guessInput = 0;
+        gameEnded = false;
+        feedback = "";
+
+        await LogNewSession();
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SubmitGuess();
+        }
+    }
+
+    private async Task SubmitGuess()
+    {
+        if (gameEnded || guessInput < 1 || guessInput > 100)
+            return;
+
+        guessCount++;
+
+        if (guessInput == targetNumber)
+        {
+            feedback = $"🎉 Correct! You guessed it in {guessCount} tries.";
+            gameEnded = true;
+            await FinalizeSession(true);
+        }
+        else if (guessInput < targetNumber)
+        {
+            feedback = "Too low. Try again!";
+        }
+        else
+        {
+            feedback = "Too high. Try again!";
+        }
+    }
+
+    private async Task LogNewSession()
+    {
+        try
+        {
+            var connStr = Configuration.GetConnectionString("MariaDb");
+            using var conn = new MySqlConnector.MySqlConnection(connStr);
+            await conn.OpenAsync();
+
+            int userId = await GetUserId(conn);
+            int gameId = await GetGameId(conn, "HigherLower");
+
+            var cmd = new MySqlConnector.MySqlCommand(@"
+INSERT INTO higherlower_sessions (user_id, game_id, guess_count, won)
+VALUES (@user_id, @game_id, 0, FALSE);
+SELECT LAST_INSERT_ID();", conn);
+
+            cmd.Parameters.AddWithValue("@user_id", userId);
+            cmd.Parameters.AddWithValue("@game_id", gameId);
+
+            currentSessionId = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error logging session: " + ex.Message);
+        }
+    }
+
+    private async Task FinalizeSession(bool won)
+    {
+        try
+        {
+            var connStr = Configuration.GetConnectionString("MariaDb");
+            using var conn = new MySqlConnector.MySqlConnection(connStr);
+            await conn.OpenAsync();
+
+            var cmd = new MySqlConnector.MySqlCommand(@"
+UPDATE higherlower_sessions
+SET guess_count = @guess_count, won = @won, finished_at = NOW()
+WHERE id = @id;", conn);
+
+            cmd.Parameters.AddWithValue("@guess_count", guessCount);
+            cmd.Parameters.AddWithValue("@won", won);
+            cmd.Parameters.AddWithValue("@id", currentSessionId);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error finalizing session: " + ex.Message);
+        }
+    }
+
+    private async Task<int> GetUserId(MySqlConnector.MySqlConnection conn)
+    {
+        var cmd = new MySqlConnector.MySqlCommand("SELECT id FROM users WHERE name = @name", conn);
+        cmd.Parameters.AddWithValue("@name", UserState.Username);
+        var result = await cmd.ExecuteScalarAsync();
+        return Convert.ToInt32(result);
+    }
+
+    private async Task<int> GetGameId(MySqlConnector.MySqlConnection conn, string gameName)
+    {
+        var cmd = new MySqlConnector.MySqlCommand("SELECT id FROM games WHERE name = @name", conn);
+        cmd.Parameters.AddWithValue("@name", gameName);
+        var result = await cmd.ExecuteScalarAsync();
+        return Convert.ToInt32(result);
+    }
+}

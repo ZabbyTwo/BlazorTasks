@@ -20,7 +20,6 @@
     }
 </div>
 
-
 @if (loginSuccess)
 {
     <div class="alert alert-success mt-3">
@@ -41,7 +40,6 @@
         Successfully logged out.
     </div>
 }
-
 
 @if (showLogin)
 {
@@ -127,7 +125,6 @@
     private bool showLogin = false;
     private bool loginError = false;
     private bool loginSuccess = false;
-    private bool IsLoggedIn = false;
     private bool showSignUp = false;
     private bool signUpError = false;
     private bool signUpSuccess = false;
@@ -145,6 +142,7 @@
         showLogin = true;
         loginError = false;
         loginSuccess = false;
+        logoutSuccess = false;
         ResetForm();
     }
 
@@ -153,6 +151,7 @@
         showSignUp = true;
         signUpError = false;
         signUpDuplicateError = false;
+        logoutSuccess = false;
         ResetForm();
     }
 
@@ -175,6 +174,8 @@
     {
         loginError = string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password);
         loginSuccess = false;
+        logoutSuccess = false;
+
         if (loginError)
             return;
 
@@ -193,8 +194,6 @@
 
             if (result > 0)
             {
-                Console.WriteLine($"User: {username} | logged in | {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-
                 string updateLogin = "UPDATE users SET last_login = NOW() WHERE name = @username";
                 using var updateCmd = new MySqlConnector.MySqlCommand(updateLogin, conn);
                 updateCmd.Parameters.AddWithValue("@username", username);
@@ -205,7 +204,6 @@
                 loginError = false;
                 showLogin = false;
 
-                // Optional: auto-hide success message after 5 seconds
                 _ = Task.Delay(5000).ContinueWith(_ =>
                 {
                     loginSuccess = false;
@@ -240,7 +238,6 @@
             using var conn = new MySqlConnector.MySqlConnection(connStr);
             await conn.OpenAsync();
 
-            // Check if username already exists
             var checkCmd = new MySqlConnector.MySqlCommand("SELECT COUNT(*) FROM users WHERE name = @username", conn);
             checkCmd.Parameters.AddWithValue("@username", username);
             var existing = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
@@ -249,17 +246,13 @@
             {
                 signUpError = true;
                 signUpDuplicateError = true;
-                Console.WriteLine($"SignUp error: Username '{username}' already exists.");
                 return;
             }
-            else
-            {
-                signUpDuplicateError = false;
-            }
+
+            signUpDuplicateError = false;
 
             string insertQuery = @"INSERT INTO users (name, password, birthday)
 VALUES (@username, SHA2(@password, 256), @birthday)";
-
             using var cmd = new MySqlConnector.MySqlCommand(insertQuery, conn);
             cmd.Parameters.AddWithValue("@username", username);
             cmd.Parameters.AddWithValue("@password", password);
@@ -267,10 +260,12 @@ VALUES (@username, SHA2(@password, 256), @birthday)";
 
             await cmd.ExecuteNonQueryAsync();
 
-            Console.WriteLine($"User: {username} | signed up | {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             lastSignedUpUsername = username;
             signUpSuccess = true;
             showSignUp = false;
+
+            // Auto-login after sign-up
+            UserState.SetUser(username);
 
             await InvokeAsync(StateHasChanged);
 

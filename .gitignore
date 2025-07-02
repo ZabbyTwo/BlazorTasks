@@ -1,0 +1,64 @@
+# Build directories
+bin/
+obj/
+artifacts/
+out/
+publish/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+
+# VS Code settings
+.vscode/
+
+# JetBrains Rider
+.idea/
+
+# Logs
+*.log
+*.tlog
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Node.js dependencies
+node_modules/
+wwwroot/node_modules/
+wwwroot/dist/
+
+# .NET-specific lock files
+project.lock.json
+project.fragment.lock.json
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Database files (if using SQLite or similar)
+*.db
+*.sqlite
+
+# Secret configuration (adjust if using secure values in development)
+secrets.json
+appsettings.Development.json
+
+# Test output
+TestResults/
+test-results/
+playwright-report/
+
+# Other
+*.env
+docker-compose.override.yml

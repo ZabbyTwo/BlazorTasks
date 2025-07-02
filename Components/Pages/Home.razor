@@ -1,5 +1,7 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@inject UserState UserState
+@inject IConfiguration Configuration
 
 <PageTitle>Home</PageTitle>
 
@@ -7,9 +9,39 @@
 <p>Please log in or create an account to access all features.</p>
 
 <div class="d-flex gap-3 mt-3">
-    <button class="btn btn-primary" @onclick="ShowLogin">Login</button>
-    <button class="btn btn-outline-primary" @onclick="ShowSignUp">Sign Up</button>
+    @if (!UserState.IsLoggedIn)
+    {
+        <button class="btn btn-primary" @onclick="ShowLogin">Login</button>
+        <button class="btn btn-outline-primary" @onclick="ShowSignUp">Sign Up</button>
+    }
+    else
+    {
+        <button class="btn btn-outline-danger" @onclick="Logout">Logout</button>
+    }
 </div>
+
+
+@if (loginSuccess)
+{
+    <div class="alert alert-success mt-3">
+        Successfully logged in as <strong>@username</strong>.
+    </div>
+}
+
+@if (signUpSuccess)
+{
+    <div class="alert alert-success mt-3">
+        Successfully signed up as <strong>@lastSignedUpUsername</strong>.
+    </div>
+}
+
+@if (logoutSuccess)
+{
+    <div class="alert alert-info mt-3">
+        Successfully logged out.
+    </div>
+}
+
 
 @if (showLogin)
 {
@@ -17,17 +49,22 @@
         <div class="modal-box">
             <h4>Login</h4>
 
-            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
-            @if (loginError && string.IsNullOrWhiteSpace(username))
+            @if (loginError && !string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
             {
-                <div class="text-danger small">Username is required</div>
+                <div class="text-danger small mb-2">Invalid username or password.</div>
             }
 
-            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
+            @if (loginError && string.IsNullOrWhiteSpace(username))
+            {
+                <div class="text-danger small mb-1">Username is required</div>
+            }
+            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
+
             @if (loginError && string.IsNullOrWhiteSpace(password))
             {
-                <div class="text-danger small">Password is required</div>
+                <div class="text-danger small mb-1">Password is required</div>
             }
+            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
 
             <div class="d-flex gap-2 mt-3">
                 <button class="btn btn-secondary" @onclick="CloseLogin">Cancel</button>
@@ -43,22 +80,26 @@
         <div class="modal-box">
             <h4>Sign Up</h4>
 
-            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
             @if (signUpError && string.IsNullOrWhiteSpace(username))
             {
-                <div class="text-danger small">Username is required</div>
+                <div class="text-danger small mb-1">Username is required</div>
             }
 
-            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
+            @if (signUpDuplicateError)
+            {
+                <div class="text-danger small mb-1">Username already exists. Please choose another.</div>
+            }
+            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
+
             @if (signUpError && string.IsNullOrWhiteSpace(password))
             {
-                <div class="text-danger small">Password is required</div>
+                <div class="text-danger small mb-1">Password is required</div>
             }
+            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
 
-            <input type="password" class="form-control mb-2" @bind="passwordCheck" placeholder="Confirm your Password" />
             @if (signUpError && (string.IsNullOrWhiteSpace(passwordCheck) || password != passwordCheck))
             {
-                <div class="text-danger small">
+                <div class="text-danger small mb-1">
                     @if (string.IsNullOrWhiteSpace(passwordCheck))
                     {
                         <span>Password confirmation is required</span>
@@ -69,6 +110,7 @@
                     }
                 </div>
             }
+            <input type="password" class="form-control mb-2" @bind="passwordCheck" placeholder="Confirm your Password" />
 
             <label for="birthdayInput" class="form-label mt-2">Birthday <span class="text-muted">(optional)</span></label>
             <input id="birthdayInput" type="date" class="form-control mb-2" @bind="birthday" />
@@ -83,20 +125,26 @@
 
 @code {
     private bool showLogin = false;
-    private bool showSignUp = false;
-
     private bool loginError = false;
+    private bool loginSuccess = false;
+    private bool IsLoggedIn = false;
+    private bool showSignUp = false;
     private bool signUpError = false;
+    private bool signUpSuccess = false;
+    private bool signUpDuplicateError = false;
+    private bool logoutSuccess = false;
 
     private string username = "";
     private string password = "";
     private string passwordCheck = "";
+    private string lastSignedUpUsername = "";
     private DateTime? birthday = null;
 
     private void ShowLogin()
     {
         showLogin = true;
         loginError = false;
+        loginSuccess = false;
         ResetForm();
     }
 
@@ -104,6 +152,7 @@
     {
         showSignUp = true;
         signUpError = false;
+        signUpDuplicateError = false;
         ResetForm();
     }
 
@@ -118,21 +167,64 @@
     {
         showSignUp = false;
         signUpError = false;
+        signUpDuplicateError = false;
         ResetForm();
     }
 
-    private void Login()
+    private async Task Login()
     {
         loginError = string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password);
+        loginSuccess = false;
         if (loginError)
             return;
 
-        showLogin = false;
-        Console.WriteLine($"User: {username} | logged in | {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
-        ResetForm();
+        try
+        {
+            var connStr = Configuration.GetConnectionString("MariaDb");
+            using var conn = new MySqlConnector.MySqlConnection(connStr);
+            await conn.OpenAsync();
+
+            string query = "SELECT COUNT(*) FROM users WHERE name = @username AND password = SHA2(@password, 256)";
+            using var cmd = new MySqlConnector.MySqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@username", username);
+            cmd.Parameters.AddWithValue("@password", password);
+
+            var result = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+
+            if (result > 0)
+            {
+                Console.WriteLine($"User: {username} | logged in | {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+
+                string updateLogin = "UPDATE users SET last_login = NOW() WHERE name = @username";
+                using var updateCmd = new MySqlConnector.MySqlCommand(updateLogin, conn);
+                updateCmd.Parameters.AddWithValue("@username", username);
+                await updateCmd.ExecuteNonQueryAsync();
+
+                UserState.SetUser(username);
+                loginSuccess = true;
+                loginError = false;
+                showLogin = false;
+
+                // Optional: auto-hide success message after 5 seconds
+                _ = Task.Delay(5000).ContinueWith(_ =>
+                {
+                    loginSuccess = false;
+                    InvokeAsync(StateHasChanged);
+                });
+            }
+            else
+            {
+                loginError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Login error: " + ex.Message);
+            loginError = true;
+        }
     }
 
-    private void SignUp()
+    private async Task SignUp()
     {
         signUpError = string.IsNullOrWhiteSpace(username) ||
         string.IsNullOrWhiteSpace(password) ||
@@ -142,9 +234,75 @@
         if (signUpError)
             return;
 
-        showSignUp = false;
-        Console.WriteLine($"User: {username} | signed up | {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}");
+        try
+        {
+            var connStr = Configuration.GetConnectionString("MariaDb");
+            using var conn = new MySqlConnector.MySqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // Check if username already exists
+            var checkCmd = new MySqlConnector.MySqlCommand("SELECT COUNT(*) FROM users WHERE name = @username", conn);
+            checkCmd.Parameters.AddWithValue("@username", username);
+            var existing = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
+
+            if (existing > 0)
+            {
+                signUpError = true;
+                signUpDuplicateError = true;
+                Console.WriteLine($"SignUp error: Username '{username}' already exists.");
+                return;
+            }
+            else
+            {
+                signUpDuplicateError = false;
+            }
+
+            string insertQuery = @"INSERT INTO users (name, password, birthday)
+VALUES (@username, SHA2(@password, 256), @birthday)";
+
+            using var cmd = new MySqlConnector.MySqlCommand(insertQuery, conn);
+            cmd.Parameters.AddWithValue("@username", username);
+            cmd.Parameters.AddWithValue("@password", password);
+            cmd.Parameters.AddWithValue("@birthday", birthday.HasValue ? birthday.Value.ToString("yyyy-MM-dd") : null);
+
+            await cmd.ExecuteNonQueryAsync();
+
+            Console.WriteLine($"User: {username} | signed up | {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            lastSignedUpUsername = username;
+            signUpSuccess = true;
+            showSignUp = false;
+
+            await InvokeAsync(StateHasChanged);
+
+            _ = Task.Delay(5000).ContinueWith(_ =>
+            {
+                signUpSuccess = false;
+                InvokeAsync(StateHasChanged);
+            });
+
+            ResetForm();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("SignUp error: " + ex.Message);
+            signUpError = true;
+        }
+    }
+
+    private void Logout()
+    {
+        UserState.Logout();
+        loginSuccess = false;
+        signUpSuccess = false;
+        logoutSuccess = true;
         ResetForm();
+        StateHasChanged();
+
+        _ = Task.Delay(5000).ContinueWith(_ =>
+        {
+            logoutSuccess = false;
+            InvokeAsync(StateHasChanged);
+        });
     }
 
     private void ResetForm()

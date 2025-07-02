@@ -1,4 +1,7 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject UserState UserState
+@rendermode InteractiveServer
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">BlazorTasks</a>
     </div>
@@ -9,15 +12,41 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span aria-hidden="true"></span> Home
-            </NavLink>
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
         </div>
-
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="popup">
-                <span aria-hidden="true"></span> PopUp Exampe
-            </NavLink>
+            <NavLink class="nav-link" href="PopUp">PopUp Example</NavLink>
         </div>
+        @if (UserState.IsLoggedIn)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="higherlower" Match="NavLinkMatch.All">Higher Lower</NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="tictactoe">Tic Tac Toe</NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="profile">Profile</NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="stats">Stats</NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link">Logged in as: @UserState.Username</NavLink>
+            </div>
+        }
     </nav>
 </div>
+
+
+@code {
+    protected override void OnInitialized()
+    {
+        UserState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        UserState.OnChange -= StateHasChanged;
+    }
+}

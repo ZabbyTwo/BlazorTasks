@@ -9,71 +9,66 @@
 
 <PageTitle>Profile</PageTitle>
 
-<h3>Your Profile</h3>
+<div class="profile-wrapper">
+    <h2 class="funky-heading">👤 Your Profile</h2>
 
-@if (!UserState.IsLoggedIn)
-{
-    <div class="alert alert-warning">Please log in to view your profile.</div>
-}
-else if (loading)
-{
-    <p>Loading profile...</p>
-}
-else if (loadError)
-{
-    <div class="alert alert-danger">Failed to load profile.</div>
-}
-else
-{
-    <EditForm Model="profile" OnValidSubmit="UpdateProfile">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    @if (!UserState.IsLoggedIn)
+    {
+        <div class="alert alert-warning">🚪 Please log in to view your profile.</div>
+    }
+    else if (loading)
+    {
+        <div class="loading-text">Loading your awesome profile...</div>
+    }
+    else if (loadError)
+    {
+        <div class="alert alert-danger">⚠️ Oops! Failed to load profile.</div>
+    }
+    else
+    {
+        <EditForm Model="profile" OnValidSubmit="UpdateProfile" class="profile-form">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <table class="table table-bordered w-auto">
-            <tr>
-                <th>Username</th>
-                <td>
-                    <InputText class="form-control" @bind-Value="profile.Username" />
+            <div class="form-card">
+                <div class="form-group">
+                    <label>Username</label>
+                    <InputText class="form-control funky-input" @bind-Value="profile.Username" />
                     @if (usernameExistsError)
                     {
-                        <div class="text-danger mt-1">Username already exists. Please choose another.</div>
+                        <div class="text-danger">⚠️ Username already taken. Try something cooler!</div>
                     }
-                </td>
-            </tr>
-            <tr>
-                <th>New Password</th>
-                <td>
-                    <InputText class="form-control" type="password" @bind-Value="profile.NewPassword" />
-                </td>
-            </tr>
-            <tr>
-                <th>Birthday</th>
-                <td>
-                    <InputDate class="form-control" @bind-Value="profile.Birthday" />
-                </td>
-            </tr>
-            <tr>
-                <th>Registered At</th>
-                <td>@registeredAt?.ToString("yyyy-MM-dd HH:mm")</td>
-            </tr>
-            <tr>
-                <th>Last Login</th>
-                <td>@lastLogin?.ToString("yyyy-MM-dd HH:mm")</td>
-            </tr>
-        </table>
+                </div>
 
-        <button class="btn btn-primary">Save Changes</button>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <InputText type="password" class="form-control funky-input" @bind-Value="profile.NewPassword" />
+                </div>
 
-        @if (updateSuccess)
-        {
-            <div class="alert alert-success mt-3">Profile updated successfully!</div>
-        }
-        @if (updateError)
-        {
-            <div class="alert alert-danger mt-3">Failed to update profile.</div>
-        }
-    </EditForm>
-}
+                <div class="form-group">
+                    <label>Birthday</label>
+                    <InputDate class="form-control funky-input" @bind-Value="profile.Birthday" />
+                </div>
+
+                <div class="info-display">
+                    <div><strong>Registered At:</strong> @registeredAt?.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div><strong>Last Login:</strong> @lastLogin?.ToString("yyyy-MM-dd HH:mm")</div>
+                </div>
+
+                <button type="submit" class="btn funky-btn">💾 Save Changes</button>
+
+                @if (updateSuccess)
+                {
+                    <div class="alert alert-success mt-3">🎉 Profile updated successfully!</div>
+                }
+                @if (updateError)
+                {
+                    <div class="alert alert-danger mt-3">😞 Update failed. Try again later.</div>
+                }
+            </div>
+        </EditForm>
+    }
+</div>
 
 @code {
     private ProfileModel profile = new();

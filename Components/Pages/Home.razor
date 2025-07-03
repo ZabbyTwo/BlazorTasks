@@ -5,122 +5,125 @@
 
 <PageTitle>Home</PageTitle>
 
-<h2>Welcome to BlazorTasks</h2>
-<p>Please log in or create an account to access all features.</p>
+<div class="home-page">
+    <h2>Welcome to BlazorTasks</h2>
+    <p>Please log in or create an account to access all features.</p>
 
-<div class="d-flex gap-3 mt-3">
-    @if (!UserState.IsLoggedIn)
+    <div class="d-flex justify-content-center gap-3 mt-3">
+        @if (!UserState.IsLoggedIn)
+        {
+            <button class="btn btn-primary" @onclick="ShowLogin">Login</button>
+            <button class="btn btn-outline-primary" @onclick="ShowSignUp">Sign Up</button>
+        }
+        else
+        {
+            <button class="btn btn-outline-danger" @onclick="Logout">Logout</button>
+        }
+    </div>
+
+    @if (loginSuccess)
     {
-        <button class="btn btn-primary" @onclick="ShowLogin">Login</button>
-        <button class="btn btn-outline-primary" @onclick="ShowSignUp">Sign Up</button>
+        <div class="alert alert-success mt-3">
+            Successfully logged in as <strong>@username</strong>.
+        </div>
     }
-    else
+
+    @if (signUpSuccess)
     {
-        <button class="btn btn-outline-danger" @onclick="Logout">Logout</button>
+        <div class="alert alert-success mt-3">
+            Successfully signed up as <strong>@lastSignedUpUsername</strong>.
+        </div>
+    }
+
+    @if (logoutSuccess)
+    {
+        <div class="alert alert-info mt-3">
+            Successfully logged out.
+        </div>
+    }
+
+    @if (showLogin)
+    {
+        <div class="modal-overlay">
+            <div class="modal-box">
+                <h4>Login</h4>
+
+                @if (loginError && !string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+                {
+                    <div class="text-danger small mb-2">Invalid username or password.</div>
+                }
+
+                @if (loginError && string.IsNullOrWhiteSpace(username))
+                {
+                    <div class="text-danger small mb-1">Username is required</div>
+                }
+                <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
+
+                @if (loginError && string.IsNullOrWhiteSpace(password))
+                {
+                    <div class="text-danger small mb-1">Password is required</div>
+                }
+                <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
+
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-secondary" @onclick="CloseLogin">Cancel</button>
+                    <button class="btn btn-primary" @onclick="Login">Login</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showSignUp)
+    {
+        <div class="modal-overlay">
+            <div class="modal-box">
+                <h4>Sign Up</h4>
+
+                @if (signUpError && string.IsNullOrWhiteSpace(username))
+                {
+                    <div class="text-danger small mb-1">Username is required</div>
+                }
+
+                @if (signUpDuplicateError)
+                {
+                    <div class="text-danger small mb-1">Username already exists. Please choose another.</div>
+                }
+                <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
+
+                @if (signUpError && string.IsNullOrWhiteSpace(password))
+                {
+                    <div class="text-danger small mb-1">Password is required</div>
+                }
+                <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
+
+                @if (signUpError && (string.IsNullOrWhiteSpace(passwordCheck) || password != passwordCheck))
+                {
+                    <div class="text-danger small mb-1">
+                        @if (string.IsNullOrWhiteSpace(passwordCheck))
+                        {
+                            <span>Password confirmation is required</span>
+                        }
+                        else
+                        {
+                            <span>Passwords do not match</span>
+                        }
+                    </div>
+                }
+                <input type="password" class="form-control mb-2" @bind="passwordCheck"
+                    placeholder="Confirm your Password" />
+
+                <label for="birthdayInput" class="form-label mt-2">Birthday <span
+                        class="text-muted">(optional)</span></label>
+                <input id="birthdayInput" type="date" class="form-control mb-2" @bind="birthday" />
+
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-secondary" @onclick="CloseSignUp">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SignUp">Sign Up</button>
+                </div>
+            </div>
+        </div>
     }
 </div>
-
-@if (loginSuccess)
-{
-    <div class="alert alert-success mt-3">
-        Successfully logged in as <strong>@username</strong>.
-    </div>
-}
-
-@if (signUpSuccess)
-{
-    <div class="alert alert-success mt-3">
-        Successfully signed up as <strong>@lastSignedUpUsername</strong>.
-    </div>
-}
-
-@if (logoutSuccess)
-{
-    <div class="alert alert-info mt-3">
-        Successfully logged out.
-    </div>
-}
-
-@if (showLogin)
-{
-    <div class="modal-overlay">
-        <div class="modal-box">
-            <h4>Login</h4>
-
-            @if (loginError && !string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
-            {
-                <div class="text-danger small mb-2">Invalid username or password.</div>
-            }
-
-            @if (loginError && string.IsNullOrWhiteSpace(username))
-            {
-                <div class="text-danger small mb-1">Username is required</div>
-            }
-            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
-
-            @if (loginError && string.IsNullOrWhiteSpace(password))
-            {
-                <div class="text-danger small mb-1">Password is required</div>
-            }
-            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
-
-            <div class="d-flex gap-2 mt-3">
-                <button class="btn btn-secondary" @onclick="CloseLogin">Cancel</button>
-                <button class="btn btn-primary" @onclick="Login">Login</button>
-            </div>
-        </div>
-    </div>
-}
-
-@if (showSignUp)
-{
-    <div class="modal-overlay">
-        <div class="modal-box">
-            <h4>Sign Up</h4>
-
-            @if (signUpError && string.IsNullOrWhiteSpace(username))
-            {
-                <div class="text-danger small mb-1">Username is required</div>
-            }
-
-            @if (signUpDuplicateError)
-            {
-                <div class="text-danger small mb-1">Username already exists. Please choose another.</div>
-            }
-            <input class="form-control mb-2" @bind="username" placeholder="Enter your Username" />
-
-            @if (signUpError && string.IsNullOrWhiteSpace(password))
-            {
-                <div class="text-danger small mb-1">Password is required</div>
-            }
-            <input type="password" class="form-control mb-2" @bind="password" placeholder="Enter your Password" />
-
-            @if (signUpError && (string.IsNullOrWhiteSpace(passwordCheck) || password != passwordCheck))
-            {
-                <div class="text-danger small mb-1">
-                    @if (string.IsNullOrWhiteSpace(passwordCheck))
-                    {
-                        <span>Password confirmation is required</span>
-                    }
-                    else
-                    {
-                        <span>Passwords do not match</span>
-                    }
-                </div>
-            }
-            <input type="password" class="form-control mb-2" @bind="passwordCheck" placeholder="Confirm your Password" />
-
-            <label for="birthdayInput" class="form-label mt-2">Birthday <span class="text-muted">(optional)</span></label>
-            <input id="birthdayInput" type="date" class="form-control mb-2" @bind="birthday" />
-
-            <div class="d-flex gap-2 mt-3">
-                <button class="btn btn-secondary" @onclick="CloseSignUp">Cancel</button>
-                <button class="btn btn-primary" @onclick="SignUp">Sign Up</button>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
     private bool showLogin = false;
     private bool loginError = false;
@@ -264,7 +267,11 @@ VALUES (@username, SHA2(@password, 256), @birthday)";
             signUpSuccess = true;
             showSignUp = false;
 
-            // Auto-login after sign-up
+            string updateLogin = "UPDATE users SET last_login = NOW() WHERE name = @username";
+            using var updateCmd = new MySqlConnector.MySqlCommand(updateLogin, conn);
+            updateCmd.Parameters.AddWithValue("@username", username);
+            await updateCmd.ExecuteNonQueryAsync();
+
             UserState.SetUser(username);
 
             await InvokeAsync(StateHasChanged);

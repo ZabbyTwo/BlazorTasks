@@ -96,3 +96,213 @@ h1:focus {
 .modal-box h4 {
     margin-bottom: 15px;
 }
+
+/* Profile Page Style */
+.profile-wrapper {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: linear-gradient(to bottom right, #f7f0ff, #e0f7fa);
+    border-radius: 18px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+}
+
+.funky-heading {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: #4a148c;
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.funky-input {
+    border: 2px solid #ce93d8;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.funky-input:focus {
+    border-color: #6a1b9a;
+    outline: none;
+    box-shadow: 0 0 0 0.15rem rgba(106, 27, 154, 0.3);
+}
+
+.funky-btn {
+    background-color: #6a1b9a;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.funky-btn:hover {
+    background-color: #8e24aa;
+}
+
+.loading-text {
+    text-align: center;
+    font-style: italic;
+    color: #5e35b1;
+}
+
+.info-display {
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: #444;
+}
+
+/* Home Page Style */
+.home-page {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: linear-gradient(to top right, #f3e5f5, #e0f2f1);
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.home-page h2 {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #4a148c;
+    margin-bottom: 1rem;
+}
+
+.home-page p {
+    font-size: 1.1rem;
+    color: #444;
+    margin-bottom: 1.5rem;
+}
+
+.btn-outline-primary {
+    border: 2px solid #6a1b9a;
+    color: #6a1b9a;
+    background-color: transparent;
+    font-weight: 600;
+}
+
+.btn-outline-primary:hover {
+    background-color: #ce93d8;
+    border-color: #8e24aa;
+    color: white;
+}
+
+.btn-outline-danger {
+    border: 2px solid #d32f2f;
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+.btn-outline-danger:hover {
+    background-color: #ef5350;
+    color: white;
+}
+
+.alert-success,
+.alert-info {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.modal-box input.form-control {
+    border-radius: 6px;
+    border: 2px solid #b39ddb;
+    font-size: 0.95rem;
+}
+
+.modal-box input.form-control:focus {
+    border-color: #6a1b9a;
+    box-shadow: 0 0 0 0.15rem rgba(106, 27, 154, 0.3);
+}
+
+.modal-box h4 {
+    color: #4a148c;
+    font-weight: 600;
+}
+
+.modal-box button.btn-secondary {
+    background-color: #bdbdbd;
+    border: none;
+    font-weight: 600;
+}
+
+.modal-box button.btn-secondary:hover {
+    background-color: #9e9e9e;
+    color: white;
+}
+
+/* Higher or Lower Page Style */
+.game-wrapper {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: linear-gradient(to bottom left, #fce4ec, #e3f2fd);
+    border-radius: 18px;
+    box-shadow: 0 0 18px rgba(0, 0, 0, 0.05);
+}
+
+.game-instructions p {
+    font-size: 1.1rem;
+    color: #444;
+}
+
+.attempts-display p {
+    font-weight: 500;
+    color: #5e35b1;
+}
+
+/* Stats Page Style */
+.stats-page {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: linear-gradient(to top left, #f1f8e9, #f3e5f5);
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.summary-table th,
+.summary-table td {
+    vertical-align: middle;
+}
+
+/* Popup Page Style */
+.popup-page h2 {
+    color: #6a1b9a;
+}
+
+.text-purple {
+    color: #6a1b9a;
+}
+
+.fw-bold {
+    font-weight: 700;
+}
+
+.fw-semibold {
+    font-weight: 600;
+}

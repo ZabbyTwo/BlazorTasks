@@ -5,66 +5,72 @@
 
 <PageTitle>Stats</PageTitle>
 
-<h3>Higher or Lower Stats</h3>
+<div class="stats-page">
+    <h2 class="funky-heading">📊 Your Higher or Lower Stats</h2>
 
-@if (!UserState.IsLoggedIn)
-{
-    <div class="alert alert-warning">Please log in to view your statistics.</div>
-}
-else if (loading)
-{
-    <p>Loading your stats...</p>
-}
-else if (hasData)
-{
-    <table class="table table-striped w-auto">
-        <thead>
-            <tr>
-                <th>Total Games Played</th>
-                <th>Average Guesses</th>
-                <th>Last Game Started At</th>
-                <th>Last Game Finished At</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>@totalGames</td>
-                <td>@avgGuesses?.ToString("0.00")</td>
-                <td>@(lastStartedAt.HasValue? lastStartedAt.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")</td>
-                <td>@(lastFinishedAt.HasValue? lastFinishedAt.Value.ToString("yyyy-MM-dd HH:mm") : "N/A")</td>
-            </tr>
-        </tbody>
-    </table>
+    @if (!UserState.IsLoggedIn)
+    {
+        <div class="alert alert-warning">🚪 Please log in to view your statistics.</div>
+    }
+    else if (loading)
+    {
+        <div class="loading-text">Loading your stats...</div>
+    }
+    else if (hasData)
+    {
+        <div class="summary-table mt-3">
+            <table class="table table-bordered table-striped text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th>Total Games Played</th>
+                        <th>Average Guesses</th>
+                        <th>Last Game Started</th>
+                        <th>Last Game Finished</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@totalGames</td>
+                        <td>@avgGuesses?.ToString("0.00")</td>
+                        <td>@(lastStartedAt?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")</td>
+                        <td>@(lastFinishedAt?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-    <h4 class="mt-4">Games Played</h4>
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Game</th>
-                <th>Attempts</th>
-                <th>Started At</th>
-                <th>Finished At</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var game in completedGames)
-            {
-                <tr>
-                    <td>@game.Id</td>
-                    <td>@game.GameName</td>
-                    <td>@game.GuessCount</td>
-                    <td>@game.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@game.FinishedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>No completed games found. Play and finish some games to see stats!</p>
-}
+        <h4 class="mt-5 mb-3 text-purple fw-bold">🎮 Game History</h4>
+        <div class="table-responsive">
+            <table class="table table-hover text-center">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>#</th>
+                        <th>Game</th>
+                        <th>Attempts</th>
+                        <th>Started At</th>
+                        <th>Finished At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var game in completedGames)
+                    {
+                        <tr>
+                            <td>@game.Id</td>
+                            <td>@game.GameName</td>
+                            <td>@game.GuessCount</td>
+                            <td>@game.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@game.FinishedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted mt-3">You haven't completed any games yet. Start playing to build your stats! 🚀</p>
+    }
+</div>
 
 @code {
     private int totalGames = 0;

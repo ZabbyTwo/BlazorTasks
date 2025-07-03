@@ -3,20 +3,20 @@
 
 <PageTitle>Popup</PageTitle>
 
-<div class="container mt-5">
-    <h2 class="mb-4">Create a Custom Popup</h2>
+<div class="popup-page container mt-5">
+    <h2 class="mb-4 text-center text-purple fw-bold">🎉 Create a Custom Popup</h2>
 
     <div class="mb-3">
-        <label for="titleInput" class="form-label">Modal Title</label>
-        <input id="titleInput" class="form-control" @bind="modalTitle" placeholder="Enter a title..." />
+        <label for="titleInput" class="form-label fw-semibold">Modal Title</label>
+        <input id="titleInput" class="form-control funky-input" @bind="modalTitle" placeholder="Enter a title..." />
     </div>
 
     <div class="mb-3">
-        <label for="textInput" class="form-label">Modal Text</label>
-        <input id="textInput" class="form-control" @bind="modalText" placeholder="Enter your message..." />
+        <label for="textInput" class="form-label fw-semibold">Modal Text</label>
+        <input id="textInput" class="form-control funky-input" @bind="modalText" placeholder="Enter your message..." />
     </div>
 
-    <button class="btn btn-primary" @onclick="ShowPopup">Open Popup</button>
+    <button class="btn funky-btn" @onclick="ShowPopup">✨ Open Popup</button>
 </div>
 
 @if (showPopup)

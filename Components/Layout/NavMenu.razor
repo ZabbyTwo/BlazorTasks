@@ -12,26 +12,31 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu"></span> Home
+            </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="PopUp">PopUp Example</NavLink>
+            <NavLink class="nav-link" href="PopUp">
+                <span class="bi bi-plus-square-fill-nav-menu"></span> PopUp Example
+            </NavLink>
         </div>
         @if (UserState.IsLoggedIn)
         {
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="higherlower" Match="NavLinkMatch.All">Higher or Lower</NavLink>
+                <NavLink class="nav-link" href="higherlower">
+                    <span class="bi bi-list-nested-nav-menu"></span> Higher or Lower
+                </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="stats">Stats</NavLink>
+                <NavLink class="nav-link" href="stats">📈 Stats</NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="profile">Logged in as: @UserState.Username</NavLink>
+                <NavLink class="nav-link" href="profile">👤 Profile</NavLink>
             </div>
         }
     </nav>
 </div>
-
 
 @code {
     protected override void OnInitialized()
